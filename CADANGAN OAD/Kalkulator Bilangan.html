@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kalkulator Bilangan dengan Two's Complement</title>
+  <style>
+    .butterfly {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      background-image: url('pngtree-pink-flying-butterfly-png-png-image_4888731.png');
+      background-size: cover;
+      animation: fly 20s linear infinite;
+      pointer-events: none;
+      opacity: 0.6;
+    }
+
+    .butterfly:nth-child(1) { top: 10%; left: -50px; animation-delay: 0s; }
+    .butterfly:nth-child(2) { top: 30%; left: -70px; animation-delay: 5s; }
+    .butterfly:nth-child(3) { top: 60%; left: -90px; animation-delay: 10s; }
+    .butterfly:nth-child(4) { top: 80%; left: -110px; animation-delay: 15s; }
+
+    @keyframes fly {
+      0% { transform: translateX(0) rotate(0deg); }
+      50% { transform: translateX(100vw) rotate(180deg); }
+      100% { transform: translateX(0) rotate(360deg); }
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, plum, skyblue);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+      flex-wrap: wrap;
+      min-height: 100vh;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      width: 100%;
+      max-width: 1200px;
+    }
+    .section {
+      background: rgba(255, 255, 255, 0.8);
+      padding: 1.5rem;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s ease;
+      backdrop-filter: blur(5px);
+    }
+    .section:hover {
+      transform: scale(1.01);
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 1rem;
+      font-size: 1.6rem;
+      color: purple;
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+      color: #5a3d5c;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 0.7rem;
+      margin-top: 0.5rem;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      outline: none;
+      background: rgba(255, 255, 255, 0.9);
+    }
+    button {
+      background-color: skyblue;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s;
+      margin-top: 1.5rem;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #5ab3f0;
+    }
+    .result {
+      margin-top: 1rem;
+      background: rgba(176, 224, 230, 0.8);
+      padding: 1rem;
+      border-radius: 10px;
+      font-size: 1rem;
+      word-wrap: break-word;
+      color: #333;
+    }
+    .error {
+      color: #ff6b6b;
+      font-weight: bold;
+    }
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      margin-top: 1rem;
+    }
+    .checkbox-container input {
+      width: auto;
+      margin-right: 0.5rem;
+    }
+    .twos-complement-info {
+      font-size: 0.8rem;
+      color: #666;
+      margin-top: 0.5rem;
+      display: none;
+    }
+    .twos-complement-info.show {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+<div class="butterfly"></div>
+<div class="butterfly"></div>
+<div class="butterfly"></div>
+<div class="butterfly"></div>
+
+<div class="container">
+  <!-- Konversi Bilangan -->
+  <div class="section">
+    <h2>🎀 Konversi Bilangan</h2>
+    <label for="convInput">Masukkan Bilangan:</label>
+    <input type="text" id="convInput" placeholder="Contoh: 1010 (biner) atau -5 (desimal)">
+    <label for="convBase">Basis:</label>
+    <select id="convBase">
+      <option value="2">Biner</option>
+      <option value="8">Oktal</option>
+      <option value="10" selected>Desimal</option>
+      <option value="16">Heksadesimal</option>
+    </select>
+    
+    <div class="checkbox-container">
+      <input type="checkbox" id="useTwosComplementConv" onchange="toggleTwosComplementInfo('conv')">
+      <label for="useTwosComplementConv">Gunakan Two's Complement</label>
+    </div>
+    <div id="twosComplementInfoConv" class="twos-complement-info">
+      Two's Complement adalah representasi bilangan negatif dalam biner. Centang ini jika input adalah bilangan negatif atau Anda ingin melihat representasi Two's Complement.
+    </div>
+    
+    <button onclick="convert()">Konversi</button>
+    <div class="result" id="convResult"></div>
+  </div>
+
+  <!-- Operasi Aritmatika -->
+  <div class="section">
+    <h2>💋 Operasi Aritmatika</h2>
+    <label for="op1">Bilangan 1:</label>
+    <input type="text" id="op1" placeholder="Contoh: 1010 (biner) atau -5 (desimal)">
+    <label for="base1">Basis Bilangan 1:</label>
+    <select id="base1">
+      <option value="2">Biner</option>
+      <option value="8">Oktal</option>
+      <option value="10" selected>Desimal</option>
+      <option value="16">Heksadesimal</option>
+    </select>
+
+    <label for="op2">Bilangan 2:</label>
+    <input type="text" id="op2" placeholder="Contoh: 1100 (biner) atau 3 (desimal)">
+    <label for="base2">Basis Bilangan 2:</label>
+    <select id="base2">
+      <option value="2">Biner</option>
+      <option value="8">Oktal</option>
+      <option value="10" selected>Desimal</option>
+      <option value="16">Heksadesimal</option>
+    </select>
+
+    <label for="operation">Operasi:</label>
+    <select id="operation">
+      <option value="+">Penjumlahan</option>
+      <option value="-">Pengurangan</option>
+      <option value="*">Perkalian</option>
+      <option value="/">Pembagian</option>
+    </select>
+    
+    <div class="checkbox-container">
+      <input type="checkbox" id="useTwosComplementCalc" onchange="toggleTwosComplementInfo('calc')">
+      <label for="useTwosComplementCalc">Gunakan Two's Complement</label>
+    </div>
+    <div id="twosComplementInfoCalc" class="twos-complement-info">
+      Hasil negatif akan ditampilkan dalam representasi Two's Complement 8-bit dan 16-bit.
+    </div>
+    
+    <button onclick="calculate()">Hitung</button>
+    <div class="result" id="calcResult"></div>
+  </div>
+</div>
+
+<script>
+  // Fungsi untuk menampilkan info Two's Complement
+  function toggleTwosComplementInfo(type) {
+    const infoDiv = document.getElementById(`twosComplementInfo${type === 'conv' ? 'Conv' : 'Calc'}`);
+    infoDiv.classList.toggle('show');
+  }
+
+  // Fungsi untuk mengkonversi desimal ke Two's Complement
+  function decimalToTwosComplement(decimal, bits = 8) {
+    if (decimal >= 0) {
+      // Untuk bilangan positif, cukup kembalikan representasi biner biasa
+      let binary = decimal.toString(2);
+      // Pad dengan leading zeros jika perlu
+      while (binary.length < bits) {
+        binary = '0' + binary;
+      }
+      return binary;
+    } else {
+      // Untuk bilangan negatif, hitung Two's Complement
+      const max = Math.pow(2, bits);
+      const positive = max + decimal; // Ini sama dengan mengambil Two's Complement
+      let binary = positive.toString(2);
+      // Pastikan panjangnya sesuai dengan bits yang diminta
+      binary = binary.slice(-bits); // Ambil bits terakhir jika lebih panjang
+      return binary;
+    }
+  }
+
+  // Fungsi untuk mengkonversi Two's Complement ke desimal
+  function twosComplementToDecimal(binaryStr) {
+    // Jika bit pertama adalah 0 (positif), konversi biasa
+    if (binaryStr[0] === '0') {
+      return parseInt(binaryStr, 2);
+    }
+    
+    // Jika bit pertama adalah 1 (negatif), hitung Two's Complement
+    const length = binaryStr.length;
+    let inverted = '';
+    
+    // Invert semua bit
+    for (let i = 0; i < length; i++) {
+      inverted += binaryStr[i] === '0' ? '1' : '0';
+    }
+    
+    // Tambahkan 1
+    let decimal = parseInt(inverted, 2) + 1;
+    
+    // Hasilnya negatif
+    return -decimal;
+  }
+
+  // Fungsi untuk validasi input
+  function validateInput(value, base) {
+    let regex;
+    switch (base) {
+      case 2: regex = /^-?[01]+$/; break; 
+      case 8: regex = /^-?[0-7]+$/; break;
+      case 10: regex = /^-?\d+$/; break;
+      case 16: regex = /^-?[0-9a-fA-F]+$/i; break;
+      default: return false;
+    }
+    return regex.test(value);
+  }
+
+  // Fungsi konversi bilangan
+  function convert() {
+    const input = document.getElementById("convInput").value.trim();
+    const base = parseInt(document.getElementById("convBase").value);
+    const useTwosComplement = document.getElementById("useTwosComplementConv").checked;
+    const resultDiv = document.getElementById("convResult");
+    
+    try {
+      // Validasi input
+      if (!input) throw new Error("Masukkan bilangan terlebih dahulu.");
+      if (!validateInput(input, base)) throw new Error(`Bilangan tidak valid untuk basis ${base}!`);
+      
+      let decimal;
+      
+      // Handle Two's Complement untuk input biner
+      if (base === 2 && useTwosComplement && input[0] === '1') {
+        decimal = twosComplementToDecimal(input);
+      } else {
+        // Konversi biasa
+        const isNegative = input.startsWith('-');
+        const absInput = isNegative ? input.substring(1) : input;
+        decimal = parseInt(absInput, base);
+        if (isNegative) decimal = -decimal;
+      }
+      
+      // Hasil konversi
+      const biner = decimal >= 0 ? decimal.toString(2) : `-${Math.abs(decimal).toString(2)}`;
+      const oktal = decimal >= 0 ? decimal.toString(8) : `-${Math.abs(decimal).toString(8)}`;
+      const heksa = decimal >= 0 ? decimal.toString(16).toUpperCase() : `-${Math.abs(decimal).toString(16).toUpperCase()}`;
+      
+      // Two's Complement representation
+      const twos8 = decimalToTwosComplement(decimal, 8);
+      const twos16 = decimalToTwosComplement(decimal, 16);
+      
+      resultDiv.innerHTML = `
+        <strong>Desimal:</strong> ${decimal}<br>
+        <strong>Biner:</strong> ${biner} (${biner.replace('-', '').length} bit)<br>
+        <strong>Oktal:</strong> ${oktal}<br>
+        <strong>Heksadesimal:</strong> ${heksa}<br>
+        ${decimal < 0 ? `
+        <strong>Two's Complement (8-bit):</strong> ${twos8}<br>
+        <strong>Two's Complement (16-bit):</strong> ${twos16}
+        ` : ''}
+      `;
+    } catch (e) {
+      resultDiv.innerHTML = `<div class='error'>${e.message}</div>`;
+    }
+  }
+
+  // Fungsi operasi aritmatika
+  function calculate() {
+    const num1 = document.getElementById("op1").value.trim();
+    const base1 = parseInt(document.getElementById("base1").value);
+    const num2 = document.getElementById("op2").value.trim();
+    const base2 = parseInt(document.getElementById("base2").value);
+    const operation = document.getElementById("operation").value;
+    const useTwosComplement = document.getElementById("useTwosComplementCalc").checked;
+    const resultDiv = document.getElementById("calcResult");
+
+    try {
+      // Validasi input
+      if (!num1) throw new Error("Masukkan bilangan pertama.");
+      if (!validateInput(num1, base1)) throw new Error(`Bilangan pertama tidak valid untuk basis ${base1}!`);
+      
+      if (operation !== '^2' && operation !== 'sqrt') {
+        if (!num2) throw new Error("Masukkan bilangan kedua.");
+        if (!validateInput(num2, base2)) throw new Error(`Bilangan kedua tidak valid untuk basis ${base2}!`);
+      }
+
+      // Konversi ke desimal
+      let decimal1, decimal2;
+      
+      // Handle Two's Complement untuk input biner
+      if (base1 === 2 && useTwosComplement && num1[0] === '1') {
+        decimal1 = twosComplementToDecimal(num1);
+      } else {
+        const isNegative = num1.startsWith('-');
+        const absNum1 = isNegative ? num1.substring(1) : num1;
+        decimal1 = parseInt(absNum1, base1);
+        if (isNegative) decimal1 = -decimal1;
+      }
+      
+      if (operation !== '^2' && operation !== 'sqrt') {
+        if (base2 === 2 && useTwosComplement && num2[0] === '1') {
+          decimal2 = twosComplementToDecimal(num2);
+        } else {
+          const isNegative = num2.startsWith('-');
+          const absNum2 = isNegative ? num2.substring(1) : num2;
+          decimal2 = parseInt(absNum2, base2);
+          if (isNegative) decimal2 = -decimal2;
+        }
+      }
+      
+      // Operasi aritmatika
+      let result;
+      switch (operation) {
+        case '+': result = decimal1 + decimal2; break;
+        case '-': result = decimal1 - decimal2; break;
+        case '*': result = decimal1 * decimal2; break;
+        case '/':
+          if (decimal2 === 0) throw new Error("Tidak bisa dibagi dengan nol!");
+          result = decimal1 / decimal2; 
+          break;
+        default: throw new Error("Operasi tidak dikenali.");
+      }
+      
+      // Hasil konversi
+      const biner = result >= 0 ? Math.floor(result).toString(2) : `-${Math.abs(Math.floor(result)).toString(2)}`;
+      const oktal = result >= 0 ? Math.floor(result).toString(8) : `-${Math.abs(Math.floor(result)).toString(8)}`;
+      const heksa = result >= 0 ? Math.floor(result).toString(16).toUpperCase() : `-${Math.abs(Math.floor(result)).toString(16).toUpperCase()}`;
+      
+      // Two's Complement representation jika hasil negatif
+      const twos8 = result < 0 ? decimalToTwosComplement(Math.floor(result), 8) : '-';
+      const twos16 = result < 0 ? decimalToTwosComplement(Math.floor(result), 16) : '-';
+      
+      resultDiv.innerHTML = `
+        <strong>Hasil Desimal:</strong> ${result}<br>
+        <strong>Biner:</strong> ${biner} (${biner.replace('-', '').length} bit)<br>
+        <strong>Oktal:</strong> ${oktal}<br>
+        <strong>Heksadesimal:</strong> ${heksa}<br>
+        ${result < 0 ? `
+        <strong>Two's Complement (8-bit):</strong> ${twos8}<br>
+        <strong>Two's Complement (16-bit):</strong> ${twos16}
+        ` : ''}
+      `;
+    } catch (e) {
+      resultDiv.innerHTML = `<div class='error'>${e.message}</div>`;
+    }
+  }
+</script>
+</body>
+</html>
